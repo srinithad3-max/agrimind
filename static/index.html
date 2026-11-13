@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AgriMind · Multi-Agent Crop Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Manrope:wght@400;500;600;700&family=Noto+Sans+Telugu:wght@400;600&family=Noto+Sans+Devanagari:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 40 40" class="logo" aria-hidden="true">
+      <path d="M20 36 C20 24 20 18 20 12" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <path d="M20 22 C10 22 6 14 7 6 C15 6 20 12 20 22Z" fill="currentColor" opacity=".85"/>
+      <path d="M20 17 C28 17 33 11 33 4 C26 4 20 9 20 17Z" fill="currentColor" opacity=".55"/>
+      <circle cx="20" cy="36" r="2.6" fill="var(--sun)"/>
+    </svg>
+    <div>
+      <h1>AgriMind</h1>
+      <p>Five cooperating AI agents · one farm plan</p>
+    </div>
+  </div>
+  <div class="status" id="status">
+    <span class="pill" id="pill-cnn">Disease model …</span>
+    <span class="pill" id="pill-yield">Yield model …</span>
+    <span class="pill" id="pill-llm">LLM …</span>
+  </div>
+  <div class="lang" role="tablist" aria-label="Advisory language">
+    <button data-lang="en" class="on">EN</button>
+    <button data-lang="hi">हिंदी</button>
+    <button data-lang="te">తెలుగు</button>
+  </div>
+</header>
+
+<div class="layout">
+  <!-- ================= FARM PROFILE ================= -->
+  <aside class="sidebar">
+    <div class="presets">
+      <p class="eyebrow">Quick scenarios</p>
+      <button class="preset" data-preset="blight"><b>Tomato · blight before rain</b><span>Flowering stage, humid week</span></button>
+      <button class="preset" data-preset="heat"><b>Rice · heatwave at flowering</b><span>42°C, dry week, AWD</span></button>
+      <button class="preset" data-preset="live"><b>Live · my farm</b><span>Real Open-Meteo forecast</span></button>
+    </div>
+
+    <form id="farm" autocomplete="off">
+      <fieldset>
+        <legend>Crop &amp; season</legend>
+        <label>Crop<select name="crop" id="crop"></select></label>
+        <div class="row2">
+          <label>Sowing date<input type="date" name="sowing_date" id="sowing"></label>
+          <label>Area (acres)<input type="number" name="area" value="2" min="0.1" step="0.1"></label>
+        </div>
+        <div class="stage-preview" id="stagePreview"></div>
+        <div class="row2">
+          <label>Previous crop
+            <select name="prev_crop">
+              <option value="none">None / fallow</option><option value="potato">Potato</option>
+              <option value="tomato">Tomato</option><option value="brinjal">Brinjal</option>
+              <option value="chilli">Chilli</option><option value="rice">Rice</option>
+              <option value="maize">Maize</option><option value="cotton">Cotton</option>
+              <option value="groundnut">Groundnut</option><option value="greengram">Green gram</option>
+              <option value="chickpea">Chickpea</option>
+            </select></label>
+          <label>Last yield (q/acre)<input type="number" name="last_yield" placeholder="optional" step="0.1"></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Location</legend>
+        <div class="row2 place">
+          <label>District<select name="place" id="place"></select></label>
+          <label>Or search<input id="placeSearch" placeholder="e.g. Medak"></label>
+        </div>
+        <input type="hidden" name="lat" id="lat"><input type="hidden" name="lon" id="lon">
+        <label>Weather source
+          <select name="scenario" id="scenario">
+            <option value="live">Live forecast (Open-Meteo)</option>
+            <option value="blight">Demo: humid week, rain on day 2</option>
+            <option value="heat">Demo: heatwave</option>
+          </select></label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Soil (Soil Health Card)</legend>
+        <label>Soil type<select name="soil" id="soil"></select></label>
+        <div class="row4">
+          <label>N <small>kg/ha</small><input type="number" name="n" value="220"></label>
+          <label>P <small>kg/ha</small><input type="number" name="p" value="12"></label>
+          <label>K <small>kg/ha</small><input type="number" name="k" value="150"></label>
+          <label>pH<input type="number" name="ph" value="6.9" step="0.1"></label>
+        </div>
+        <label>Soil moisture <output id="mOut">45%</output> <small>of field capacity</small>
+          <input type="range" name="moisture" id="moisture" min="5" max="100" value="45"></label>
+        <label>Irrigation method</label>
+        <div class="seg" id="method">
+          <input type="radio" name="method" id="m-drip" value="drip"><label for="m-drip">Drip</label>
+          <input type="radio" name="method" id="m-spr" value="sprinkler" checked><label for="m-spr">Sprinkler</label>
+          <input type="radio" name="method" id="m-flood" value="flood"><label for="m-flood">Flood</label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Leaf photo</legend>
+        <label class="drop" id="drop">
+          <input type="file" accept="image/*" capture="environment" id="file">
+          <img id="preview" alt="">
+          <span id="dropText">Tap to take / upload a leaf photo<br><small>or drop an image here</small></span>
+        </label>
+        <div class="samples" id="samples"></div>
+      </fieldset>
+
+      <button type="submit" class="run" id="runBtn">
+        <span>Run agent team</span><kbd>▶</kbd>
+      </button>
+    </form>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <main>
+    <section class="hero card">
+      <div class="net-wrap">
+        <div class="card-h"><h2>Agent network</h2><span class="muted" id="runtime"></span></div>
+        <svg id="net" viewBox="0 0 520 330" role="img" aria-label="Agent network"></svg>
+      </div>
+      <div class="feed-wrap">
+        <div class="card-h"><h2>Agent conversation</h2><span class="live" id="liveDot">idle</span></div>
+        <ol class="feed" id="feed">
+          <li class="hint">Pick a scenario or fill the farm profile, then press <b>Run agent team</b>. Every message the agents exchange appears here live.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="kpis" id="kpis">
+      <div class="kpi" data-k="stage"><span>Growth stage</span><b>–</b><small></small></div>
+      <div class="kpi" data-k="disease"><span>Leaf health</span><b>–</b><small></small></div>
+      <div class="kpi" data-k="water"><span>Water this week</span><b>–</b><small></small></div>
+      <div class="kpi" data-k="yield"><span>Yield outlook</span><b>–</b><small></small></div>
+      <div class="kpi accent" data-k="money"><span>Value protected by plan</span><b>–</b><small></small></div>
+    </section>
+
+    <section class="card advisory" id="advisoryCard">
+      <div class="card-h">
+        <h2>Action plan <span class="muted" id="advStage"></span></h2>
+        <div class="actions">
+          <button class="ghost" id="speakBtn" title="Read aloud">🔊 Listen</button>
+          <button class="ghost" id="waBtn" title="Send on WhatsApp">💬 WhatsApp</button>
+          <button class="ghost" id="printBtn" title="Printable report">🧾 Report</button>
+        </div>
+      </div>
+      <p class="ai-summary" id="aiSummary" hidden></p>
+      <div id="recs" class="recs"><p class="empty">The Advisory Agent's prioritised plan will appear here.</p></div>
+    </section>
+
+    <section class="grid2">
+      <article class="card" id="diseaseCard">
+        <div class="card-h"><h2>🔬 Disease</h2><div class="tabs" id="imgTabs"></div></div>
+        <div class="empty">Waiting for Disease Agent…</div>
+      </article>
+      <article class="card" id="weatherCard">
+        <div class="card-h"><h2>🌦 Weather · 7 days</h2><span class="muted" id="wxSource"></span></div>
+        <div class="empty">Waiting for Weather Agent…</div>
+      </article>
+      <article class="card" id="irrCard">
+        <div class="card-h"><h2>💧 Irrigation plan</h2><span class="muted" id="irrMeta"></span></div>
+        <div class="empty">Waiting for Irrigation Agent…</div>
+      </article>
+      <article class="card" id="yieldCard">
+        <div class="card-h"><h2>📈 Yield forecast</h2><span class="muted" id="yMeta"></span></div>
+        <div class="empty">Waiting for Yield Agent…</div>
+      </article>
+    </section>
+
+    <section class="card" id="stageCard">
+      <div class="card-h"><h2>🌱 Growth stage &amp; crop water demand (FAO-56 Kc)</h2></div>
+      <div class="empty">Run the agents to see the season timeline.</div>
+    </section>
+
+    <section class="card ask">
+      <div class="card-h"><h2>Ask AgriMind</h2><span class="muted">answers use this farm's live agent data</span></div>
+      <form id="askForm"><input id="askQ" placeholder="e.g. Should I water tomorrow?  /  నేను రేపు నీరు పెట్టాలా?"><button>Ask</button></form>
+      <div id="askA" class="ask-a"></div>
+    </section>
+    <footer class="foot">AgriMind · weather: Open-Meteo · ET₀ &amp; Kc: FAO-56 · disease data: PlantVillage. Advice is decision support; confirm chemical doses with your local KVK.</footer>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>
