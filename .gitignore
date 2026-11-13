@@ -7,3 +7,4 @@ models/*.joblib
 results.zip
 PITCH_NOTES.md
 push_to_github.bat
+CODE_GUIDE.md

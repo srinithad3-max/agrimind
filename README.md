@@ -4,6 +4,8 @@ Five cooperating AI agents (**Weather · Disease · Irrigation · Yield · Advis
 talk to each other live on screen, and turn a leaf photo + soil card + live forecast into a
 growth-stage-aware action plan in **English, Hindi and Telugu**, with voice, WhatsApp sharing and a printable report.
 
+**Live demo:** https://agrimind-nzbr.onrender.com  (free server: the first visit may take about a minute to wake up)
+
 ## Results
 
 | Component | Result |
