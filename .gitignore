@@ -5,3 +5,5 @@ __pycache__/
 data/weather_cache_*
 models/*.joblib
 results.zip
+PITCH_NOTES.md
+push_to_github.bat
