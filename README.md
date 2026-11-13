@@ -4,6 +4,20 @@ Five cooperating AI agents (**Weather · Disease · Irrigation · Yield · Advis
 talk to each other live on screen, and turn a leaf photo + soil card + live forecast into a
 growth-stage-aware action plan in **English, Hindi and Telugu**, with voice, WhatsApp sharing and a printable report.
 
+## Results
+
+| Component | Result |
+|---|---|
+| Disease CNN (MobileNetV3-Large, 38 classes) | **99.84% test accuracy**, macro-F1 0.998 on 8,786 unseen images |
+| Training | 70,295 images, 4 epochs, ~40 min on a Kaggle T4 GPU |
+| Yield model (HistGradientBoosting) | R² 0.973 on 8,000 held-out samples (agronomic simulation, see below) |
+| Demo scenario (tomato, early blight on 51% of leaf, rain on day 2) | Yield −52% if no action → −35% with plan · ₹30,694 protected on 2 acres · 66% less water |
+
+![Confusion matrix](models/confusion_matrix.png)
+![Training curves](models/training_curves.png)
+
+Sample photos in `samples/` (tomato early blight, healthy tomato, leaf curl virus, potato early blight, maize rust) are from the dataset's separate `test` folder.
+
 ---
 
 ## 1. Run it (5 minutes)
@@ -16,6 +30,8 @@ pip install -r requirements.txt
 #   (PyTorch is big. CPU-only version:  pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu)
 python run.py
 ```
+On Windows you can simply double-click **`start_agrimind.bat`** (stops any old copy, then starts the app).
+
 Open **http://localhost:8000** · API docs at **http://localhost:8000/docs**
 
 Works immediately, even before you train anything:
